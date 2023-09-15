@@ -57,6 +57,22 @@
 *
 */
 
+#if __has_include("BetterLogger.h")
+    #include "BetterLogger.h"
+    #define _LOG_E LOGE
+    #define _LOG_W LOGW
+    #define _LOG_I LOGI
+    #define _LOG_D LOGD
+    #define _LOG_V LOGV
+#else
+    #include "esp_log.h"
+    #define _LOG_E ESP_LOG_E
+    #define _LOG_W ESP_LOG_W
+    #define _LOG_I ESP_LOG_I
+    #define _LOG_D ESP_LOG_D
+    #define _LOG_V ESP_LOG_V
+#endif
+
 #include <Arduino.h>
 
 #include <math.h>
@@ -217,7 +233,7 @@ static void ping_recv(int s) {
                 }
 
                 // Print ...
-                log_d("%d bytes from %s: icmp_seq=%d time=%.3f ms\r\n", len, ipa,
+                _LOG_V("ping", "%d bytes from %s: icmp_seq=%d time=%.3f ms", len, ipa,
                       ntohs(iecho->seqno), elapsed
                 );
 
@@ -230,7 +246,7 @@ static void ping_recv(int s) {
     }
 
     if (len < 0) {
-        log_d("Request timeout for icmp_seq %d\r\n", ping_seq_num);
+        _LOG_V("ping", "Request timeout for icmp_seq %d", ping_seq_num);
     }
 }
 /*
@@ -321,7 +337,7 @@ bool ping_start(IPAddress adr, int count=0, int interval=0, int size=0, int time
     char ipa[16];
 
     strcpy(ipa, inet_ntoa(ping_target));
-    log_i("PING %s: %d data bytes\r\n",  ipa, size);
+    _LOG_D("ping", "PING %s: %d data bytes",  ipa, size);
 
     ping_seq_num = 0;
     
@@ -337,7 +353,7 @@ bool ping_start(IPAddress adr, int count=0, int interval=0, int size=0, int time
 
     closesocket(s);
 
-    log_i("%d packets transmitted, %d packets received, %.1f%% packet loss\r\n",
+    _LOG_D("ping", "%d packets transmitted, %d packets received, %.1f%% packet loss",
           transmitted,
           received,
           ((((float)transmitted - (float)received) / (float)transmitted) * 100.0)
@@ -346,7 +362,7 @@ bool ping_start(IPAddress adr, int count=0, int interval=0, int size=0, int time
     
     if (ping_o) {
         ping_resp pingresp;
-        log_i("round-trip min/avg/max/stddev = %.3f/%.3f/%.3f/%.3f ms\r\n", min_time, mean_time, max_time, sqrt(var_time / received));
+        _LOG_V("ping", "round-trip min/avg/max/stddev = %.3f/%.3f/%.3f/%.3f ms", min_time, mean_time, max_time, sqrt(var_time / received));
         pingresp.total_count = count; //Number of pings
         pingresp.resp_time = mean_time; //Average time for the pings
         pingresp.seqno = 0; //not relevant
